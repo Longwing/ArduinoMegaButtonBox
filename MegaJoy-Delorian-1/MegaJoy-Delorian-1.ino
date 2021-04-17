@@ -9,7 +9,7 @@
 
 // Define Pins - This provides a naming convention for pins being used for various functions, making it easier to track the pins later on by using their variables instead.
 
-// These are standard switches and buttons with one end connected to Ground and the other to a digital pin on the mega. 
+// These are standard switches and buttons with one end connected to Ground and the other to a digital pin on the mega.
 // These are the "Normal" inputs that don't actually need much modification in the MegaJoy code. I've named them here just to keep track of them, but it's unlikely I'll need to call these variables.
 int EmergencySW1 = 22;
 int EmergencySW2 = 23;
@@ -21,27 +21,27 @@ int RedToggle4 = 28;
 int BigSwitch1 = 29;
 int BigSwitch2 = 30;
 
-// These pins are used for the button matrix. In my box it's a huge 6x12 matrix handling almost 40 inputs, however this code can be easily modified to handle a smaller matrix by adjusting the relavant parts of the code. 
+// These pins are used for the button matrix. In my box it's a huge 6x12 matrix handling almost 40 inputs, however this code can be easily modified to handle a smaller matrix by adjusting the relavant parts of the code.
 // The vertical portion of this matrix (V1 through V12)is where I have my diodes to prevent ghosting.
-int ButtonMtx-H1 = 41;
-int ButtonMtx-H2 = 40;
-int ButtonMtx-H3 = 39;
-int ButtonMtx-H4 = 38;
-int ButtonMtx-H5 = 37;
-int ButtonMtx-H6 = 36;
+int ButtonMtxH1 = 41;
+int ButtonMtxH2 = 40;
+int ButtonMtxH3 = 39;
+int ButtonMtxH4 = 38;
+int ButtonMtxH5 = 37;
+int ButtonMtxH6 = 36;
 
-int ButtonMtx-V1 = 53;
-int ButtonMtx-V2 = 52;
-int ButtonMtx-V3 = 51;
-int ButtonMtx-V4 = 50;
-int ButtonMtx-V5 = 49;
-int ButtonMtx-V6 = 48;
-int ButtonMtx-V7 = 47;
-int ButtonMtx-V8 = 46;
-int ButtonMtx-V9 = 45;
-int ButtonMtx-V10 = 44;
-int ButtonMtx-V11 = 43;
-int ButtonMtx-V12 = 42;
+int ButtonMtxV1 = 53;
+int ButtonMtxV2 = 52;
+int ButtonMtxV3 = 51;
+int ButtonMtxV4 = 50;
+int ButtonMtxV5 = 49;
+int ButtonMtxV6 = 48;
+int ButtonMtxV7 = 47;
+int ButtonMtxV8 = 46;
+int ButtonMtxV9 = 45;
+int ButtonMtxV10 = 44;
+int ButtonMtxV11 = 43;
+int ButtonMtxV12 = 42;
 
 // Now let's define the button matrix using Arduino's keypad.h library.
 // My matrix has a bunch of empty nodes (not perfectly efficeint, I know).
@@ -50,56 +50,182 @@ int ButtonMtx-V12 = 42;
 const byte rows = 6; //rows
 const byte cols = 12; //columns
 char keys[rows][cols] = {
-  {'*','*','a','*','*','*','*','o','p','*','q','r'},
-  {'1','2','b','*','*','*','*','*','s','t','u','*'},
-  {'3','4','c','g','h','i','j','*','*','v','9','0'},
-  {'5','6','d','*','*','*','*','*','w','x','y','*'},
-  {'7','8','e','k','l','m','n','*','*','*','*','*'},
-  {'*','*','f','*','*','*','*','*','z','+','-','*'}
+  {'*', '*', 'a', '*', '*', '*', '*', 'o', 'p', '*', 'q', 'r'},
+  {'1', '2', 'b', '*', '*', '*', '*', '*', 's', 't', 'u', '*'},
+  {'3', '4', 'c', 'g', 'h', 'i', 'j', '*', '*', 'v', '9', '0'},
+  {'5', '6', 'd', '*', '*', '*', '*', '*', 'w', 'x', 'y', '*'},
+  {'7', '8', 'e', 'k', 'l', 'm', 'n', '*', '*', '*', '*', '*'},
+  {'*', '*', 'f', '*', '*', '*', '*', '*', 'z', '+', '-', '*'}
 };
 
 // Since I defined the button matrix rows and columns as variables above, I can use the variables here to define the matrix
-byte rowPins[rows] = {ButtonMtx-H1, ButtonMtx-H2, ButtonMtx-H3, ButtonMtx-H4, ButtonMtx-H5, ButtonMtx-H6};
-byte colPins[cols] = {ButtonMtx-V1, ButtonMtx-V2, ButtonMtx-V3, ButtonMtx-V4, ButtonMtx-V5, ButtonMtx-V6, ButtonMtx-V7, ButtonMtx-V8, ButtonMtx-V9, ButtonMtx-V10, ButtonMtx-V11, ButtonMtx-V12}; 
+byte rowPins[rows] = {ButtonMtxH1, ButtonMtxH2, ButtonMtxH3, ButtonMtxH4, ButtonMtxH5, ButtonMtxH6};
+byte colPins[cols] = {ButtonMtxV1, ButtonMtxV2, ButtonMtxV3, ButtonMtxV4, ButtonMtxV5, ButtonMtxV6, ButtonMtxV7, ButtonMtxV8, ButtonMtxV9, ButtonMtxV10, ButtonMtxV11, ButtonMtxV12};
 Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, rows, cols );
 
-void setup(){
+void setup() {
   setupPins();
   setupMegaJoy();
 }
 
-void loop(){
+void loop() {
   // This loop runs constantly. Effectivly this polls all your buttons for new information about their status. We shoudln't need to make any changes here.
   megaJoyControllerData_t controllerData = getControllerData();
   setControllerData(controllerData);
+  controlLEDs();
 }
 
-void setupPins(void){
+void setupPins(void) {
   // Defining pins here will determine what pins are used as "normal" buttons. These buttons and switches will activate when shorted to ground.
   // You can define any pins (except the serial pins) here by adding them to the funtion. You can create separate blocks by copying the existing section and defining a new range.
-  for (int i = 22; i <= 30; i++){
+  for (int i = 22; i <= 30; i++) {
     pinMode(i, INPUT);
     digitalWrite(i, HIGH);
   }
 }
 
 // Here's the primary function for running MegaJoy. Any data that MegaJoy needs to interpret as a button press should be included in here somewhere.
-megaJoyControllerData_t getControllerData(void){
-  
+megaJoyControllerData_t getControllerData(void) {
+
   // Start by blanking out the variables so it's not full of junk data.
   megaJoyControllerData_t controllerData = getBlankDataForMegaController();
 
-  // This function can be used to re-assign button presses from the Arduino sample button matrix code for use in MegaJoy. We will likely need this function to make our button matrix function.
-  char key = getKey();
-  if (key == ‘1’){
-    controllerData.crossOn = 1;
-  }
-  setControllerData(controllerData);
+  // This function can be used to re-assign button presses from the Arduino sample button matrix code for use in MegaJoy.
+  // char key = getKey();
+  // if (key == ‘1’){
+  //  controllerData.crossOn = 1;
+  // }
+  // setControllerData(controllerData);
+  // }
+
+  // This code is from the keypad example library. If I understand it correctly, then it will match up to valid keys and execute code based on the key pressed.
+  char key = kpd.getKey();
+  if (key) // Check for a valid key.
+  {
+    switch (key)
+    {
+      case '1':
+        controllerData.crossOn = 1;
+        break;
+      case '2':
+        controllerData.crossOn = 2;
+        break;
+      case '3':
+        controllerData.crossOn = 3;
+        break;
+      case '4':
+        controllerData.crossOn = 4;
+        break;
+      case '5':
+        controllerData.crossOn = 5;
+        break;
+      case '6':
+        controllerData.crossOn = 6;
+        break;
+      case '7':
+        controllerData.crossOn = 7;
+        break;
+      case '8':
+        controllerData.crossOn = 8;
+        break;
+      case '9':
+        controllerData.crossOn = 9;
+        break;
+      case '0':
+        controllerData.crossOn = 10;
+        break;
+      case 'a':
+        controllerData.crossOn = 11;
+        break;
+      case 'b':
+        controllerData.crossOn = 12;
+        break;
+      case 'c':
+        controllerData.crossOn = 13;
+        break;
+      case 'd':
+        controllerData.crossOn = 14;
+        break;
+      case 'e':
+        controllerData.crossOn = 15;
+        break;
+      case 'f':
+        controllerData.crossOn = 16;
+        break;
+      case 'g':
+        controllerData.crossOn = 17;
+        break;
+      case 'h':
+        controllerData.crossOn = 18;
+        break;
+      case 'i':
+        controllerData.crossOn = 19;
+        break;
+      case 'j':
+        controllerData.crossOn = 20;
+        break;
+      case 'k':
+        controllerData.crossOn = 31;
+        break;
+      case 'l':
+        controllerData.crossOn = 32;
+        break;
+      case 'm':
+        controllerData.crossOn = 33;
+        break;
+      case 'n':
+        controllerData.crossOn = 34;
+        break;
+      case 'o':
+        controllerData.crossOn = 35;
+        break;
+      case 'p':
+        controllerData.crossOn = 36;
+        break;
+      case 'q':
+        controllerData.crossOn = 37;
+        break;
+      case 'r':
+        controllerData.crossOn = 38;
+        break;
+      case 's':
+        controllerData.crossOn = 39;
+        break;
+      case 't':
+        controllerData.crossOn = 40;
+        break;
+      case 'u':
+        controllerData.crossOn = 41;
+        break;
+      case 'v':
+        controllerData.crossOn = 42;
+        break;
+      case 'w':
+        controllerData.crossOn = 43;
+        break;
+      case 'x':
+        controllerData.crossOn = 44;
+        break;
+      case 'y':
+        controllerData.crossOn = 45;
+        break;
+      case 'z':
+        controllerData.crossOn = 46;
+        break;
+      case '+':
+        controllerData.crossOn = 47;
+        break;
+      case '-':
+        controllerData.crossOn = 48;
+        break;
+      default:
+        ;
+    }
   }
 
-  // This section should match what you've set in the setupPins function (Make sure to add 1 to the upper range, since this is less than, rather than less than or equal. 
+  // This section should match what you've set in the setupPins function (Make sure to add 1 to the upper range, since this is less than, rather than less than or equal.
   // This handles your "normal" buttons and switches that aren't part of a matrix.
-  for (int i = 22; i < 31; i++){
+  for (int i = 22; i < 31; i++) {
     controllerData.buttonArray[(i - 2) / 8] |= (!digitalRead(i)) << ((i - 2) % 8);
   }
 
@@ -108,17 +234,21 @@ megaJoyControllerData_t getControllerData(void){
   // I've commented out most axes because my button box only has one analog dial.
   controllerData.analogAxisArray[0] = analogRead(A0);
   //  controllerData.analogAxisArray[1] = analogRead(A1);
-  //  controllerData.analogAxisArray[2] = analogRead(A2); 
-  //  controllerData.analogAxisArray[3] = analogRead(A3); 
-  //  controllerData.analogAxisArray[4] = analogRead(A4); 
-  //  controllerData.analogAxisArray[5] = analogRead(A5); 
-  //  controllerData.analogAxisArray[6] = analogRead(A6); 
-  //  controllerData.analogAxisArray[7] = analogRead(A7); 
-  //  controllerData.analogAxisArray[8] = analogRead(A8); 
-  //  controllerData.analogAxisArray[9] = analogRead(A9); 
-  //  controllerData.analogAxisArray[10] = analogRead(A10); 
-  //  controllerData.analogAxisArray[11] = analogRead(A11); 
-  
+  //  controllerData.analogAxisArray[2] = analogRead(A2);
+  //  controllerData.analogAxisArray[3] = analogRead(A3);
+  //  controllerData.analogAxisArray[4] = analogRead(A4);
+  //  controllerData.analogAxisArray[5] = analogRead(A5);
+  //  controllerData.analogAxisArray[6] = analogRead(A6);
+  //  controllerData.analogAxisArray[7] = analogRead(A7);
+  //  controllerData.analogAxisArray[8] = analogRead(A8);
+  //  controllerData.analogAxisArray[9] = analogRead(A9);
+  //  controllerData.analogAxisArray[10] = analogRead(A10);
+  //  controllerData.analogAxisArray[11] = analogRead(A11);
+
   // Because this is running in a loop, this end of the function will return the current status of all buttons and axes back to the loop.
   return controllerData;
+}
+
+void controlLEDs (void) {
+  
 }
