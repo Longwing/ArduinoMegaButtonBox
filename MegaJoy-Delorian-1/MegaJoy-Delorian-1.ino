@@ -1,3 +1,8 @@
+#include <Key.h>
+#include <Keypad.h>
+
+// Configuration file for use with AlanChatham's UnoJoy project: https://github.com/AlanChatham/UnoJoy
+// With gratitude to Afterimage Flight (https://www.youtube.com/watch?v=5hawoJ8wwHk) for guidance/walkthrough on configuring this file.
 
 // Megajoy.h includes the UnoJoy library with customizations for use with an Arduino Mega. Theoretically we shouldn't need to make any changes to megajoy.h.
 #include "MegaJoy.h"
@@ -5,7 +10,7 @@
 // Define Pins - This provides a naming convention for pins being used for various functions, making it easier to track the pins later on by using their variables instead.
 
 // These are standard switches and buttons with one end connected to Ground and the other to a digital pin on the mega. 
-// These are the "Normal" inputs that don't actually need much modification in the MegaJoy code. I've named them here basically just to keep track of them.
+// These are the "Normal" inputs that don't actually need much modification in the MegaJoy code. I've named them here just to keep track of them, but it's unlikely I'll need to call these variables.
 int EmergencySW1 = 22;
 int EmergencySW2 = 23;
 int BRButton = 24;
@@ -37,6 +42,26 @@ int ButtonMtx-V9 = 45;
 int ButtonMtx-V10 = 44;
 int ButtonMtx-V11 = 43;
 int ButtonMtx-V12 = 42;
+
+// Now let's define the button matrix using Arduino's keypad.h library.
+// My matrix has a bunch of empty nodes (not perfectly efficeint, I know).
+// These are reperesented by *, which basically becomes a junk data warning.
+// If * is expressed anywehre, then something has gone wrong.
+const byte rows = 6; //rows
+const byte cols = 12; //columns
+char keys[rows][cols] = {
+  {'*','*','a','*','*','*','*','o','p','*','q','r'},
+  {'1','2','b','*','*','*','*','*','s','t','u','*'},
+  {'3','4','c','g','h','i','j','*','*','v','9','0'},
+  {'5','6','d','*','*','*','*','*','w','x','y','*'},
+  {'7','8','e','k','l','m','n','*','*','*','*','*'},
+  {'*','*','f','*','*','*','*','*','z','+','-','*'}
+};
+
+// Since I defined the button matrix rows and columns as variables above, I can use the variables here to define the matrix
+byte rowPins[rows] = {ButtonMtx-H1, ButtonMtx-H2, ButtonMtx-H3, ButtonMtx-H4, ButtonMtx-H5, ButtonMtx-H6};
+byte colPins[cols] = {ButtonMtx-V1, ButtonMtx-V2, ButtonMtx-V3, ButtonMtx-V4, ButtonMtx-V5, ButtonMtx-V6, ButtonMtx-V7, ButtonMtx-V8, ButtonMtx-V9, ButtonMtx-V10, ButtonMtx-V11, ButtonMtx-V12}; 
+Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, rows, cols );
 
 void setup(){
   setupPins();
@@ -72,8 +97,9 @@ megaJoyControllerData_t getControllerData(void){
   setControllerData(controllerData);
   }
 
-  // This section should match what you've set in the setupPins function. This handles your "normal" buttons and switches that aren't part of a matrix.
-  for (int i = 22; i < 30; i++){
+  // This section should match what you've set in the setupPins function (Make sure to add 1 to the upper range, since this is less than, rather than less than or equal. 
+  // This handles your "normal" buttons and switches that aren't part of a matrix.
+  for (int i = 22; i < 31; i++){
     controllerData.buttonArray[(i - 2) / 8] |= (!digitalRead(i)) << ((i - 2) % 8);
   }
 
