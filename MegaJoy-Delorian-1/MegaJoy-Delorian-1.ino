@@ -1,8 +1,11 @@
 
+// Megajoy.h includes the UnoJoy library with customizations for use with an Arduino Mega. Theoretically we shouldn't need to make any changes to megajoy.h.
 #include "MegaJoy.h"
 
 // Define Pins - This provides a naming convention for pins being used for various functions, making it easier to track the pins later on by using their variables instead.
 
+// These are standard switches and buttons with one end connected to Ground and the other to a digital pin on the mega. 
+// These are the "Normal" inputs that don't actually need much modification in the MegaJoy code. I've named them here basically just to keep track of them.
 int EmergencySW1 = 22;
 int EmergencySW2 = 23;
 int BRButton = 24;
@@ -13,6 +16,8 @@ int RedToggle4 = 28;
 int BigSwitch1 = 29;
 int BigSwitch2 = 30;
 
+// These pins are used for the button matrix. In my box it's a huge 6x12 matrix handling almost 40 inputs, however this code can be easily modified to handle a smaller matrix by adjusting the relavant parts of the code. 
+// The vertical portion of this matrix (V1 through V12)is where I have my diodes to prevent ghosting.
 int ButtonMtx-H1 = 41;
 int ButtonMtx-H2 = 40;
 int ButtonMtx-H3 = 39;
@@ -39,59 +44,42 @@ void setup(){
 }
 
 void loop(){
-  // Always be getting fresh data
+  // This loop runs constantly. Effectivly this polls all your buttons for new information about their status. We shoudln't need to make any changes here.
   megaJoyControllerData_t controllerData = getControllerData();
   setControllerData(controllerData);
 }
 
 void setupPins(void){
-  // Set all the digital pins as inputs
-  // with the pull-up enabled, except for the 
-  // two serial line pins
-  // DG - I've set it to only use pins 22 through 54. This leaves the unused PWM pins free for the future LED matrix.
-  for (int i = 22; i <= 54; i++){
+  // Defining pins here will determine what pins are used as "normal" buttons. These buttons and switches will activate when shorted to ground.
+  // You can define any pins (except the serial pins) here by adding them to the funtion. You can create separate blocks by copying the existing section and defining a new range.
+  for (int i = 22; i <= 30; i++){
     pinMode(i, INPUT);
     digitalWrite(i, HIGH);
   }
 }
 
+// Here's the primary function for running MegaJoy. Any data that MegaJoy needs to interpret as a button press should be included in here somewhere.
 megaJoyControllerData_t getControllerData(void){
   
-  // Set up a place for our controller data
-  //  Use the getBlankDataForController() function, since
-  //  just declaring a fresh dataForController_t tends
-  //  to get you one filled with junk from other, random
-  //  values that were in those memory locations before
+  // Start by blanking out the variables so it's not full of junk data.
   megaJoyControllerData_t controllerData = getBlankDataForMegaController();
-  // Since our buttons are all held high and
-  //  pulled low when pressed, we use the "!"
-  //  operator to invert the readings from the pins
-  for (int i = 22; i < 54; i++){
+
+  // This function can be used to re-assign button presses from the Arduino sample button matrix code for use in MegaJoy. We will likely need this function to make our button matrix function.
+  char key = getKey();
+  if (key == ‘1’){
+    controllerData.crossOn = 1;
+  }
+  setControllerData(controllerData);
+  }
+
+  // This section should match what you've set in the setupPins function. This handles your "normal" buttons and switches that aren't part of a matrix.
+  for (int i = 22; i < 30; i++){
     controllerData.buttonArray[(i - 2) / 8] |= (!digitalRead(i)) << ((i - 2) % 8);
   }
 
-
-void loop(void){
-
-  megaJoyControllerData_t controllerData = getBlankDataForController();
-  // Get your key, then assign proper controller presses
-
-  char key = getKey();
-
-  if (key == ‘1’){
-
-    controllerData.crossOn = 1;
-
-  }
-  setControllerData(controllerData);
-
-}
-  
-  // Set the analog sticks
-  //  Since analogRead(pin) returns a 10 bit value,
-  //  we need to perform a bit shift operation to
-  //  lose the 2 least significant bits and get an
-  //  8 bit number that we can use 
+  // Set the analog inputs
+  // Since analogRead(pin) returns a 10 bit value, we need to perform a bit shift operation to lose the 2 least significant bits and get an 8 bit number that we can use
+  // I've commented out most axes because my button box only has one analog dial.
   controllerData.analogAxisArray[0] = analogRead(A0);
   //  controllerData.analogAxisArray[1] = analogRead(A1);
   //  controllerData.analogAxisArray[2] = analogRead(A2); 
@@ -105,6 +93,6 @@ void loop(void){
   //  controllerData.analogAxisArray[10] = analogRead(A10); 
   //  controllerData.analogAxisArray[11] = analogRead(A11); 
   
-  // And return the data!
+  // Because this is running in a loop, this end of the function will return the current status of all buttons and axes back to the loop.
   return controllerData;
 }
