@@ -61,7 +61,7 @@ char keys[rows][cols] = {
 // Since I defined the button matrix rows and columns as variables above, I can use the variables here to define the matrix
 byte rowPins[rows] = {ButtonMtxH1, ButtonMtxH2, ButtonMtxH3, ButtonMtxH4, ButtonMtxH5, ButtonMtxH6};
 byte colPins[cols] = {ButtonMtxV1, ButtonMtxV2, ButtonMtxV3, ButtonMtxV4, ButtonMtxV5, ButtonMtxV6, ButtonMtxV7, ButtonMtxV8, ButtonMtxV9, ButtonMtxV10, ButtonMtxV11, ButtonMtxV12};
-Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, rows, cols );
+Keypad kpd = Keypad( makeKeymap(keys), rowPins, colPins, rows, cols );
 
 void setup() {
   setupPins();
@@ -72,7 +72,6 @@ void loop() {
   // This loop runs constantly. Effectivly this polls all your buttons for new information about their status. We shoudln't need to make any changes here.
   megaJoyControllerData_t controllerData = getControllerData();
   setControllerData(controllerData);
-  controlLEDs();
 }
 
 void setupPins(void) {
@@ -221,6 +220,8 @@ megaJoyControllerData_t getControllerData(void) {
       default:
         ;
     }
+      // TODO: pass in either key or controllerData.crossOn
+      controlLEDs();
   }
 
   // This section should match what you've set in the setupPins function (Make sure to add 1 to the upper range, since this is less than, rather than less than or equal.
@@ -249,6 +250,7 @@ megaJoyControllerData_t getControllerData(void) {
   return controllerData;
 }
 
+// TODO: pass in the keystroke in the parens, not void
 void controlLEDs (void) {
   
 }
