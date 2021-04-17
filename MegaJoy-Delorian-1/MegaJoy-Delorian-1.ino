@@ -68,12 +68,6 @@ void setup() {
   setupMegaJoy();
 }
 
-void loop() {
-  // This loop runs constantly. Effectivly this polls all your buttons for new information about their status. We shoudln't need to make any changes here.
-  megaJoyControllerData_t controllerData = getControllerData();
-  setControllerData(controllerData);
-}
-
 void setupPins(void) {
   // Defining pins here will determine what pins are used as "normal" buttons. These buttons and switches will activate when shorted to ground.
   // You can define any pins (except the serial pins) here by adding them to the funtion. You can create separate blocks by copying the existing section and defining a new range.
@@ -83,8 +77,16 @@ void setupPins(void) {
   }
 }
 
+void loop() {
+  // This loop runs constantly. Effectivly this polls all your buttons for new information about their status. We shoudln't need to make any changes here.
+  //char key = kpd.getKey();
+  megaJoyControllerData_t controllerData = getControllerData();
+  // controlLEDs ();
+  setControllerData(controllerData);
+}
+
 // Here's the primary function for running MegaJoy. Any data that MegaJoy needs to interpret as a button press should be included in here somewhere.
-megaJoyControllerData_t getControllerData(void) {
+megaJoyControllerData_t getControllerData() {
 
   // Start by blanking out the variables so it's not full of junk data.
   megaJoyControllerData_t controllerData = getBlankDataForMegaController();
@@ -98,11 +100,13 @@ megaJoyControllerData_t getControllerData(void) {
   // }
 
   // This code is from the keypad example library. If I understand it correctly, then it will match up to valid keys and execute code based on the key pressed.
-  char key = kpd.getKey();
+  char key = getKey();
   if (key) // Check for a valid key.
   {
     switch (key)
     {
+      case NO_KEY: 
+        break;  // Nothing new
       case '1':
         controllerData.crossOn = 1;
         break;
@@ -218,10 +222,10 @@ megaJoyControllerData_t getControllerData(void) {
         controllerData.crossOn = 48;
         break;
       default:
-        ;
+        break;
     }
       // TODO: pass in either key or controllerData.crossOn
-      controlLEDs();
+      //controlLEDs();
   }
 
   // This section should match what you've set in the setupPins function (Make sure to add 1 to the upper range, since this is less than, rather than less than or equal.
@@ -251,6 +255,8 @@ megaJoyControllerData_t getControllerData(void) {
 }
 
 // TODO: pass in the keystroke in the parens, not void
-void controlLEDs (void) {
+// megaJoyControllerData_t controlLEDs (controllerData) {
+
   
-}
+//  return controllerData;
+//}
