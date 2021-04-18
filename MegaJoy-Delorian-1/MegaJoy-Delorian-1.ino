@@ -7,42 +7,6 @@
 // Megajoy.h includes the UnoJoy library with customizations for use with an Arduino Mega. Theoretically we shouldn't need to make any changes to megajoy.h.
 #include "MegaJoy.h"
 
-// Define Pins - This provides a naming convention for pins being used for various functions, making it easier to track the pins later on by using their variables instead.
-
-// These are standard switches and buttons with one end connected to Ground and the other to a digital pin on the mega.
-// These are the "Normal" inputs that don't actually need much modification in the MegaJoy code. I've named them here just to keep track of them, but it's unlikely I'll need to call these variables.
-byte EmergencySW1 = 22;
-int EmergencySW2 = 23;
-int BRButton = 24;
-int RedToggle1 = 25;
-int RedToggle2 = 26;
-int RedToggle3 = 27;
-int RedToggle4 = 28;
-int BigSwitch1 = 29;
-int BigSwitch2 = 30;
-
-// These pins are used for the button matrix. In my box it's a huge 6x12 matrix handling almost 40 inputs, however this code can be easily modified to handle a smaller matrix by adjusting the relavant parts of the code.
-// The vertical portion of this matrix (V1 through V12)is where I have my diodes to prevent ghosting.
-byte ButtonMtxH1 = 41;
-byte ButtonMtxH2 = 40;
-byte ButtonMtxH3 = 39;
-byte ButtonMtxH4 = 38;
-byte ButtonMtxH5 = 37;
-byte ButtonMtxH6 = 36;
-
-byte ButtonMtxV1 = 53;
-byte ButtonMtxV2 = 52;
-byte ButtonMtxV3 = 51;
-byte ButtonMtxV4 = 50;
-byte ButtonMtxV5 = 49;
-byte ButtonMtxV6 = 48;
-byte ButtonMtxV7 = 47;
-byte ButtonMtxV8 = 46;
-byte ButtonMtxV9 = 45;
-byte ButtonMtxV10 = 44;
-byte ButtonMtxV11 = 43;
-byte ButtonMtxV12 = 42;
-
 int kbpress = 0;
 
 // Now let's define the button matrix using Arduino's keypad.h library.
@@ -60,9 +24,24 @@ char keys[rows][cols] = {
   {'*', '*', 'f', '*', '*', '*', '*', '*', 'z', '+', '-', '*'}
 };
 
+// char keys[rows][cols] = {
+// {' ','1','3','5','7',' '},
+// {' ','2','4','6','8',' '},
+// {'a','b','c','d','e','f'},
+// {' ',' ','g',' ','k',' '},
+// {' ',' ','h',' ','l',' '},
+// {' ',' ','i',' ','m',' '},
+// {' ',' ','j',' ','n',' '},
+// {'o',' ',' ',' ',' ',' '},
+// {'p','s',' ','w',' ','z'},
+// {' ','t','v','x',' ','+'},
+// {'q','u','9','y',' ','-'},
+// {'r',' ','0',' ',' ',' '}
+// };
+
 // Since I defined the button matrix rows and columns as variables above, I can use the variables here to define the matrix
-byte rowPins[rows] = {ButtonMtxH1, ButtonMtxH2, ButtonMtxH3, ButtonMtxH4, ButtonMtxH5, ButtonMtxH6};
-byte colPins[cols] = {ButtonMtxV1, ButtonMtxV2, ButtonMtxV3, ButtonMtxV4, ButtonMtxV5, ButtonMtxV6, ButtonMtxV7, ButtonMtxV8, ButtonMtxV9, ButtonMtxV10, ButtonMtxV11, ButtonMtxV12};
+byte rowPins[rows] = {41, 40, 39, 38, 37, 36};
+byte colPins[cols] = {53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42};
 Keypad kpd = Keypad( makeKeymap(keys), rowPins, colPins, rows, cols );
 
 void setup() {
