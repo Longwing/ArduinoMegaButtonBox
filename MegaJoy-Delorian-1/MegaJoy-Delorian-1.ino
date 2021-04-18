@@ -11,7 +11,7 @@
 
 // These are standard switches and buttons with one end connected to Ground and the other to a digital pin on the mega.
 // These are the "Normal" inputs that don't actually need much modification in the MegaJoy code. I've named them here just to keep track of them, but it's unlikely I'll need to call these variables.
-int EmergencySW1 = 22;
+byte EmergencySW1 = 22;
 int EmergencySW2 = 23;
 int BRButton = 24;
 int RedToggle1 = 25;
@@ -23,25 +23,27 @@ int BigSwitch2 = 30;
 
 // These pins are used for the button matrix. In my box it's a huge 6x12 matrix handling almost 40 inputs, however this code can be easily modified to handle a smaller matrix by adjusting the relavant parts of the code.
 // The vertical portion of this matrix (V1 through V12)is where I have my diodes to prevent ghosting.
-int ButtonMtxH1 = 41;
-int ButtonMtxH2 = 40;
-int ButtonMtxH3 = 39;
-int ButtonMtxH4 = 38;
-int ButtonMtxH5 = 37;
-int ButtonMtxH6 = 36;
+byte ButtonMtxH1 = 41;
+byte ButtonMtxH2 = 40;
+byte ButtonMtxH3 = 39;
+byte ButtonMtxH4 = 38;
+byte ButtonMtxH5 = 37;
+byte ButtonMtxH6 = 36;
 
-int ButtonMtxV1 = 53;
-int ButtonMtxV2 = 52;
-int ButtonMtxV3 = 51;
-int ButtonMtxV4 = 50;
-int ButtonMtxV5 = 49;
-int ButtonMtxV6 = 48;
-int ButtonMtxV7 = 47;
-int ButtonMtxV8 = 46;
-int ButtonMtxV9 = 45;
-int ButtonMtxV10 = 44;
-int ButtonMtxV11 = 43;
-int ButtonMtxV12 = 42;
+byte ButtonMtxV1 = 53;
+byte ButtonMtxV2 = 52;
+byte ButtonMtxV3 = 51;
+byte ButtonMtxV4 = 50;
+byte ButtonMtxV5 = 49;
+byte ButtonMtxV6 = 48;
+byte ButtonMtxV7 = 47;
+byte ButtonMtxV8 = 46;
+byte ButtonMtxV9 = 45;
+byte ButtonMtxV10 = 44;
+byte ButtonMtxV11 = 43;
+byte ButtonMtxV12 = 42;
+
+int kbpress = 0;
 
 // Now let's define the button matrix using Arduino's keypad.h library.
 // My matrix has a bunch of empty nodes (not perfectly efficeint, I know).
@@ -86,148 +88,166 @@ void loop() {
 }
 
 // Here's the primary function for running MegaJoy. Any data that MegaJoy needs to interpret as a button press should be included in here somewhere.
-megaJoyControllerData_t getControllerData() {
+megaJoyControllerData_t getControllerData(void) {
 
   // Start by blanking out the variables so it's not full of junk data.
   megaJoyControllerData_t controllerData = getBlankDataForMegaController();
 
-  // This function can be used to re-assign button presses from the Arduino sample button matrix code for use in MegaJoy.
-  // char key = getKey();
-  // if (key == ‘1’){
-  //  controllerData.crossOn = 1;
-  // }
-  // setControllerData(controllerData);
-  // }
-
   // This code is from the keypad example library. If I understand it correctly, then it will match up to valid keys and execute code based on the key pressed.
-  char key = getKey();
+  char key = kpd.getKey();
   if (key) // Check for a valid key.
   {
     switch (key)
     {
-      case NO_KEY: 
-        break;  // Nothing new
+      case NO_KEY: // If no keyboard key is pressed, then use the normal digital read instead.
+        break;  
       case '1':
-        controllerData.crossOn = 1;
+        kbpress = 1;
         break;
       case '2':
-        controllerData.crossOn = 2;
+        kbpress = 2;
         break;
       case '3':
-        controllerData.crossOn = 3;
+        kbpress = 3;
         break;
       case '4':
-        controllerData.crossOn = 4;
+        kbpress = 4;
         break;
       case '5':
-        controllerData.crossOn = 5;
+        kbpress = 5;
         break;
       case '6':
-        controllerData.crossOn = 6;
+        kbpress = 6;
         break;
       case '7':
-        controllerData.crossOn = 7;
+        kbpress = 7;
         break;
       case '8':
-        controllerData.crossOn = 8;
+        kbpress = 8;
         break;
       case '9':
-        controllerData.crossOn = 9;
+        kbpress = 9;
         break;
       case '0':
-        controllerData.crossOn = 10;
+        kbpress = 10;
         break;
       case 'a':
-        controllerData.crossOn = 11;
+        kbpress = 11;
         break;
       case 'b':
-        controllerData.crossOn = 12;
+        kbpress = 12;
         break;
       case 'c':
-        controllerData.crossOn = 13;
+        kbpress = 13;
         break;
       case 'd':
-        controllerData.crossOn = 14;
+        kbpress = 14;
         break;
       case 'e':
-        controllerData.crossOn = 15;
+        kbpress = 15;
         break;
       case 'f':
-        controllerData.crossOn = 16;
+        kbpress = 16;
         break;
       case 'g':
-        controllerData.crossOn = 17;
+        kbpress = 17;
         break;
       case 'h':
-        controllerData.crossOn = 18;
+        kbpress = 18;
         break;
       case 'i':
-        controllerData.crossOn = 19;
+        kbpress = 19;
         break;
       case 'j':
-        controllerData.crossOn = 20;
+        kbpress = 20;
         break;
       case 'k':
-        controllerData.crossOn = 31;
+        kbpress = 31;
         break;
       case 'l':
-        controllerData.crossOn = 32;
+        kbpress = 32;
         break;
       case 'm':
-        controllerData.crossOn = 33;
+        kbpress = 33;
         break;
       case 'n':
-        controllerData.crossOn = 34;
+        kbpress = 34;
         break;
       case 'o':
-        controllerData.crossOn = 35;
+        kbpress = 35;
         break;
       case 'p':
-        controllerData.crossOn = 36;
+        kbpress = 36;
         break;
       case 'q':
-        controllerData.crossOn = 37;
+        kbpress = 37;
         break;
       case 'r':
-        controllerData.crossOn = 38;
+        kbpress = 38;
         break;
       case 's':
-        controllerData.crossOn = 39;
+        kbpress = 39;
         break;
       case 't':
-        controllerData.crossOn = 40;
+        kbpress = 40;
         break;
       case 'u':
-        controllerData.crossOn = 41;
+        kbpress = 41;
         break;
       case 'v':
-        controllerData.crossOn = 42;
+        kbpress = 42;
         break;
       case 'w':
-        controllerData.crossOn = 43;
+        kbpress = 43;
         break;
       case 'x':
-        controllerData.crossOn = 44;
+        kbpress = 44;
         break;
       case 'y':
-        controllerData.crossOn = 45;
+        kbpress = 45;
         break;
       case 'z':
-        controllerData.crossOn = 46;
+        kbpress = 46;
         break;
       case '+':
-        controllerData.crossOn = 47;
+        kbpress = 47;
         break;
       case '-':
-        controllerData.crossOn = 48;
+        kbpress = 48;
         break;
-      default:
+      default:  // If no keyboard key is pressed, then use the normal digital read instead.
         break;
     }
-      // TODO: pass in either key or controllerData.crossOn
-      //controlLEDs();
+    // Will this work correctly? No idea. Should this take the i variables from above and turn them into the right bitecode?
+    controllerData.buttonArray[(kbpress - 2) / 8] |= 1 << ((kbpress - 2) % 8); 
   }
 
+  // /PSEUDO
+char keys = ['01234567890abcdefghijklmnopqrstuvwxyz+-']
+for (int j = 0; i < keys.length(); j++) {
+  if (j <= 20) 
+  { 
+    kbpress = j + 1; 
+    }
+  else 
+  {
+    kbpress = j + 11; 
+    }
+  
+  switch(kpd.getState(keys[j]))
+  {
+    case PRESS:
+    case HOLD:
+      controllerData.buttonArray[(kbpress - 2) / 8] &= 0 << ((kbpress - 2) % 8);
+      break;
+    default:
+      controllerData.buttonArray[(kbpress - 2) / 8] |= 1 << ((kbpress - 2) % 8);
+  }
+}
+
+  // PSEUDO
+
+  
   // This section should match what you've set in the setupPins function (Make sure to add 1 to the upper range, since this is less than, rather than less than or equal.
   // This handles your "normal" buttons and switches that aren't part of a matrix.
   for (int i = 22; i < 31; i++) {
