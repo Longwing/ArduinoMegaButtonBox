@@ -93,173 +93,35 @@ megaJoyControllerData_t getControllerData(void) {
   // Start by blanking out the variables so it's not full of junk data.
   megaJoyControllerData_t controllerData = getBlankDataForMegaController();
 
-  // This code is from the keypad example library. If I understand it correctly, then it will match up to valid keys and execute code based on the key pressed.
-  char key = kpd.getKey();
-  if (key) // Check for a valid key.
-  {
-    switch (key)
-    {
-      case NO_KEY: // If no keyboard key is pressed, then use the normal digital read instead.
-        break;  
-      case '1':
-        kbpress = 1;
-        break;
-      case '2':
-        kbpress = 2;
-        break;
-      case '3':
-        kbpress = 3;
-        break;
-      case '4':
-        kbpress = 4;
-        break;
-      case '5':
-        kbpress = 5;
-        break;
-      case '6':
-        kbpress = 6;
-        break;
-      case '7':
-        kbpress = 7;
-        break;
-      case '8':
-        kbpress = 8;
-        break;
-      case '9':
-        kbpress = 9;
-        break;
-      case '0':
-        kbpress = 10;
-        break;
-      case 'a':
-        kbpress = 11;
-        break;
-      case 'b':
-        kbpress = 12;
-        break;
-      case 'c':
-        kbpress = 13;
-        break;
-      case 'd':
-        kbpress = 14;
-        break;
-      case 'e':
-        kbpress = 15;
-        break;
-      case 'f':
-        kbpress = 16;
-        break;
-      case 'g':
-        kbpress = 17;
-        break;
-      case 'h':
-        kbpress = 18;
-        break;
-      case 'i':
-        kbpress = 19;
-        break;
-      case 'j':
-        kbpress = 20;
-        break;
-      case 'k':
-        kbpress = 31;
-        break;
-      case 'l':
-        kbpress = 32;
-        break;
-      case 'm':
-        kbpress = 33;
-        break;
-      case 'n':
-        kbpress = 34;
-        break;
-      case 'o':
-        kbpress = 35;
-        break;
-      case 'p':
-        kbpress = 36;
-        break;
-      case 'q':
-        kbpress = 37;
-        break;
-      case 'r':
-        kbpress = 38;
-        break;
-      case 's':
-        kbpress = 39;
-        break;
-      case 't':
-        kbpress = 40;
-        break;
-      case 'u':
-        kbpress = 41;
-        break;
-      case 'v':
-        kbpress = 42;
-        break;
-      case 'w':
-        kbpress = 43;
-        break;
-      case 'x':
-        kbpress = 44;
-        break;
-      case 'y':
-        kbpress = 45;
-        break;
-      case 'z':
-        kbpress = 46;
-        break;
-      case '+':
-        kbpress = 47;
-        break;
-      case '-':
-        kbpress = 48;
-        break;
-      default:  // If no keyboard key is pressed, then use the normal digital read instead.
-        break;
-    }
-    // Will this work correctly? No idea. Should this take the i variables from above and turn them into the right bitecode?
-    controllerData.buttonArray[(kbpress - 2) / 8] |= 1 << ((kbpress - 2) % 8); 
-  }
-
-  // /PSEUDO
-char keys = ['01234567890abcdefghijklmnopqrstuvwxyz+-']
-for (int j = 0; i < keys.length(); j++) {
-  if (j <= 20) 
-  { 
-    kbpress = j + 1; 
-    }
-  else 
-  {
-    kbpress = j + 11; 
+  String keyring = "1234567890abcdefghijklmnopqrstuvwxyz+-";
+  for (int j = 0; j < keyring.length(); j++) {
+    if (j <= 20) { 
+      kbpress = j + 1; 
+    } else {
+      kbpress = j + 11; 
     }
   
-  switch(kpd.getState(keys[j]))
-  {
-    case PRESS:
-    case HOLD:
-      controllerData.buttonArray[(kbpress - 2) / 8] &= 0 << ((kbpress - 2) % 8);
-      break;
-    default:
-      controllerData.buttonArray[(kbpress - 2) / 8] |= 1 << ((kbpress - 2) % 8);
+    if (kpd.isPressed(keyring[j])) {
+        controllerData.buttonArray[(kbpress - 2) / 8] |= 1 << ((kbpress - 2) % 8);
+    } else {
+        controllerData.buttonArray[(kbpress - 2) / 8] &= 0 << ((kbpress - 2) % 8);
+    }
   }
-}
 
-  // PSEUDO
-
-  
   // This section should match what you've set in the setupPins function (Make sure to add 1 to the upper range, since this is less than, rather than less than or equal.
   // This handles your "normal" buttons and switches that aren't part of a matrix.
   for (int i = 22; i < 31; i++) {
-    controllerData.buttonArray[(i - 2) / 8] |= (!digitalRead(i)) << ((i - 2) % 8);
+    bool isPressed = !digitalRead(i);
+    if (i > 24 && i < 29){isPressed = !isPressed;}
+    controllerData.buttonArray[(i - 2) / 8] |= (isPressed) << ((i - 2) % 8);
   }
 
   // Set the analog inputs
   // Since analogRead(pin) returns a 10 bit value, we need to perform a bit shift operation to lose the 2 least significant bits and get an 8 bit number that we can use
   // I've commented out most axes because my button box only has one analog dial.
-  controllerData.analogAxisArray[0] = analogRead(A0);
+  //  controllerData.analogAxisArray[0] = analogRead(A0);
   //  controllerData.analogAxisArray[1] = analogRead(A1);
-  //  controllerData.analogAxisArray[2] = analogRead(A2);
+  controllerData.analogAxisArray[2] = analogRead(A2);
   //  controllerData.analogAxisArray[3] = analogRead(A3);
   //  controllerData.analogAxisArray[4] = analogRead(A4);
   //  controllerData.analogAxisArray[5] = analogRead(A5);
