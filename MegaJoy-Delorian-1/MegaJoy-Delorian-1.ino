@@ -24,11 +24,11 @@ char keys[rows][cols] = {
   {'*', '*', 'f', '*', '*', '*', '*', '*', 'z', '+', '-', '*'}
 };
 
-// char keys[rows][cols] = {
-// {' ','1','3','5','7',' '},
-// {' ','2','4','6','8',' '},
+//char keys[rows][cols] = {
+// {'&','1','3','5','7','&'},
+// {'&','2','4','6','8','&'},
 // {'a','b','c','d','e','f'},
-// {' ',' ','g',' ','k',' '},
+// {'&','&','g','&','k','&'},
 // {' ',' ','h',' ','l',' '},
 // {' ',' ','i',' ','m',' '},
 // {' ',' ','j',' ','n',' '},
@@ -37,7 +37,7 @@ char keys[rows][cols] = {
 // {' ','t','v','x',' ','+'},
 // {'q','u','9','y',' ','-'},
 // {'r',' ','0',' ',' ',' '}
-// };
+//};
 
 // Since I defined the button matrix rows and columns as variables above, I can use the variables here to define the matrix
 byte rowPins[rows] = {41, 40, 39, 38, 37, 36};
@@ -47,6 +47,7 @@ Keypad kpd = Keypad( makeKeymap(keys), rowPins, colPins, rows, cols );
 void setup() {
   setupPins();
   setupMegaJoy();
+  Serial.begin(9600);
 }
 
 void setupPins(void) {
@@ -60,14 +61,17 @@ void setupPins(void) {
 
 void loop() {
   // This loop runs constantly. Effectivly this polls all your buttons for new information about their status. We shoudln't need to make any changes here.
-  //char key = kpd.getKey();
+
+  char key = kpd.getKey();
+  if (key != NO_KEY){
+    Serial.println(key);}
+    
   megaJoyControllerData_t controllerData = getControllerData();
-  // controlLEDs ();
   setControllerData(controllerData);
 }
 
 // Here's the primary function for running MegaJoy. Any data that MegaJoy needs to interpret as a button press should be included in here somewhere.
-megaJoyControllerData_t getControllerData(void) {
+megaJoyControllerData_t getControllerData(void){
 
   // Start by blanking out the variables so it's not full of junk data.
   megaJoyControllerData_t controllerData = getBlankDataForMegaController();
@@ -114,10 +118,3 @@ megaJoyControllerData_t getControllerData(void) {
   // Because this is running in a loop, this end of the function will return the current status of all buttons and axes back to the loop.
   return controllerData;
 }
-
-// TODO: pass in the keystroke in the parens, not void
-// megaJoyControllerData_t controlLEDs (controllerData) {
-
-  
-//  return controllerData;
-//}
