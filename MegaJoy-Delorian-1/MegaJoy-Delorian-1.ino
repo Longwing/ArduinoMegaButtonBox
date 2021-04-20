@@ -1,5 +1,5 @@
-#include <Key.h>
-#include <Keypad.h>
+#include <Adafruit_Keypad.h>
+#include <Adafruit_Keypad_Ringbuffer.h>
 
 // Configuration file for use with AlanChatham's UnoJoy project: https://github.com/AlanChatham/UnoJoy
 // With gratitude to Afterimage Flight (https://www.youtube.com/watch?v=5hawoJ8wwHk) for guidance/walkthrough on configuring this file.
@@ -13,41 +13,43 @@ int kbpress = 0;
 // My matrix has a bunch of empty nodes (not perfectly efficeint, I know).
 // These are reperesented by *, which basically becomes a junk data warning.
 // If * is expressed anywehre, then something has gone wrong.
-const byte rows = 6; //rows
-const byte cols = 12; //columns
-char keys[rows][cols] = {
-  {'*', '*', 'a', '*', '*', '*', '*', 'o', 'p', '*', 'q', 'r'},
-  {'1', '2', 'b', '*', '*', '*', '*', '*', 's', 't', 'u', '*'},
-  {'3', '4', 'c', 'g', 'h', 'i', 'j', '*', '*', 'v', '9', '0'},
-  {'5', '6', 'd', '*', '*', '*', '*', '*', 'w', 'x', 'y', '*'},
-  {'7', '8', 'e', 'k', 'l', 'm', 'n', '*', '*', '*', '*', '*'},
-  {'*', '*', 'f', '*', '*', '*', '*', '*', 'z', '+', '-', '*'}
+const byte ROWS = 12; //rows
+const byte COLS = 6; //columns
+// char keys[rows][cols] = {
+//   {'*', '*', 'a', '*', '*', '*', '*', 'o', 'p', '*', 'q', 'r'},
+//   {'1', '2', 'b', '*', '*', '*', '*', '*', 's', 't', 'u', '*'},
+//   {'3', '4', 'c', 'g', 'h', 'i', 'j', '*', '*', 'v', '9', '0'},
+//   {'5', '6', 'd', '*', '*', '*', '*', '*', 'w', 'x', 'y', '*'},
+//   {'7', '8', 'e', 'k', 'l', 'm', 'n', '*', '*', '*', '*', '*'},
+//   {'*', '*', 'f', '*', '*', '*', '*', '*', 'z', '+', '-', '*'}
+// };
+
+char keys[ROWS][COLS] = {
+ {'&','1','3','5','7','&'},
+ {'&','2','4','6','8','&'},
+ {'a','b','c','d','e','f'},
+ {'&','&','g','&','k','&'},
+ {' ',' ','h',' ','l',' '},
+ {' ',' ','i',' ','m',' '},
+ {' ',' ','j',' ','n',' '},
+ {'o',' ',' ',' ',' ',' '},
+ {'p','s',' ','w',' ','z'},
+ {' ','t','v','x',' ','+'},
+ {'q','u','9','y',' ','-'},
+ {'r',' ','0',' ',' ',' '}
 };
 
-//char keys[rows][cols] = {
-// {'&','1','3','5','7','&'},
-// {'&','2','4','6','8','&'},
-// {'a','b','c','d','e','f'},
-// {'&','&','g','&','k','&'},
-// {' ',' ','h',' ','l',' '},
-// {' ',' ','i',' ','m',' '},
-// {' ',' ','j',' ','n',' '},
-// {'o',' ',' ',' ',' ',' '},
-// {'p','s',' ','w',' ','z'},
-// {' ','t','v','x',' ','+'},
-// {'q','u','9','y',' ','-'},
-// {'r',' ','0',' ',' ',' '}
-//};
-
 // Since I defined the button matrix rows and columns as variables above, I can use the variables here to define the matrix
-byte rowPins[rows] = {41, 40, 39, 38, 37, 36};
-byte colPins[cols] = {53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42};
-Keypad kpd = Keypad( makeKeymap(keys), rowPins, colPins, rows, cols );
+byte rowPins[ROWS] = {53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42};
+byte colPins[COLS] = {41, 40, 39, 38, 37, 36};
+// Keypad kpd = Keypad( makeKeymap(keys), rowPins, colPins, rows, cols );
+Adafruit_Keypad customKeypad = Adafruit_Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
 void setup() {
   setupPins();
   setupMegaJoy();
   Serial.begin(9600);
+  customKeypad.begin();
 }
 
 void setupPins(void) {
@@ -62,9 +64,20 @@ void setupPins(void) {
 void loop() {
   // This loop runs constantly. Effectivly this polls all your buttons for new information about their status. We shoudln't need to make any changes here.
 
-  char key = kpd.getKey();
-  if (key != NO_KEY){
-    Serial.println(key);}
+  //char key = kpd.getKey();
+  //if (key != NO_KEY){
+  //  Serial.println(key);}
+
+customKeypad.tick();
+
+  while(customKeypad.available()){
+    keypadEvent e = customKeypad.read();
+    Serial.print((char)e.bit.KEY);
+    if(e.bit.EVENT == KEY_JUST_PRESSED) Serial.println(" pressed");
+    else if(e.bit.EVENT == KEY_JUST_RELEASED) Serial.println(" released");
+  }
+
+  delay(10);
     
   megaJoyControllerData_t controllerData = getControllerData();
   setControllerData(controllerData);
@@ -76,20 +89,20 @@ megaJoyControllerData_t getControllerData(void){
   // Start by blanking out the variables so it's not full of junk data.
   megaJoyControllerData_t controllerData = getBlankDataForMegaController();
 
-  String keyring = "1234567890abcdefghijklmnopqrstuvwxyz+-";
-  for (int j = 0; j < keyring.length(); j++) {
-    if (j <= 20) { 
-      kbpress = j + 1; 
-    } else {
-      kbpress = j + 11; 
-    }
+//  String keyring = "1234567890abcdefghijklmnopqrstuvwxyz+-";
+//  for (int j = 0; j < keyring.length(); j++) {
+//    if (j <= 20) { 
+//      kbpress = j + 1; 
+//    } else {
+//      kbpress = j + 11; 
+//    }
   
-    if (kpd.isPressed(keyring[j])) {
-        controllerData.buttonArray[(kbpress - 2) / 8] |= 1 << ((kbpress - 2) % 8);
-    } else {
-        controllerData.buttonArray[(kbpress - 2) / 8] &= 0 << ((kbpress - 2) % 8);
-    }
-  }
+//    if (kpd.isPressed(keyring[j])) {
+//        controllerData.buttonArray[(kbpress - 2) / 8] |= 1 << ((kbpress - 2) % 8);
+//    } else {
+//        controllerData.buttonArray[(kbpress - 2) / 8] &= 0 << ((kbpress - 2) % 8);
+//    }
+//  }
 
   // This section should match what you've set in the setupPins function (Make sure to add 1 to the upper range, since this is less than, rather than less than or equal.
   // This handles your "normal" buttons and switches that aren't part of a matrix.
