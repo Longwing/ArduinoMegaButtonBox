@@ -29,18 +29,18 @@ const byte COLS = 6; //columns
 // };
 
 char keys[ROWS][COLS] = {
- {'&','1','3','5','7','&'},
- {'&','2','4','6','8','&'},
- {'a','b','c','d','e','f'},
- {'&','&','g','&','k','&'},
- {' ',' ','h',' ','l',' '},
- {' ',' ','i',' ','m',' '},
- {' ',' ','j',' ','n',' '},
- {'o',' ',' ',' ',' ',' '},
- {'p','s',' ','w',' ','z'},
- {' ','t','v','x',' ','+'},
- {'q','u','9','y',' ','-'},
- {'r',' ','0',' ',' ',' '}
+  {'&', '1', '3', '5', '7', '&'},
+  {'&', '2', '4', '6', '8', '&'},
+  {'a', 'b', 'c', 'd', 'e', 'f'},
+  {'&', '&', 'g', '&', 'k', '&'},
+  {' ', ' ', 'h', ' ', 'l', ' '},
+  {' ', ' ', 'i', ' ', 'm', ' '},
+  {' ', ' ', 'j', ' ', 'n', ' '},
+  {'o', ' ', ' ', ' ', ' ', ' '},
+  {'p', 's', ' ', 'w', ' ', 'z'},
+  {' ', 't', 'v', 'x', ' ', '+'},
+  {'q', 'u', '9', 'y', ' ', '-'},
+  {'r', ' ', '0', ' ', ' ', ' '}
 };
 
 // These are the pins used for the columns and rows. This is where you're plugging in the actual wiring of your key matrix.
@@ -75,16 +75,16 @@ void loop() {
   //if (key != NO_KEY){
   //  Serial.println(key);}
 
-//  customKeypad.tick();
-//  while(customKeypad.available()){
-//    keypadEvent e = customKeypad.read();
-    //    This line will cause the matrix keypad to output to the Serial connection. This is great for testing, but interferes with Megajoy.
-    //    Uncomment this line to see what your key matrix is actually putting out. Comment it before working on the Megajoy portion of the code.
-    //    Serial.print((char)e.bit.KEY);
-//    if(e.bit.EVENT == KEY_JUST_PRESSED) Serial.println(" pressed");
-//    else if(e.bit.EVENT == KEY_JUST_RELEASED) Serial.println(" released");
-//  }
-// delay(10);
+  //  customKeypad.tick();
+  //  while(customKeypad.available()){
+  //    keypadEvent e = customKeypad.read();
+  //    This line will cause the matrix keypad to output to the Serial connection. This is great for testing, but interferes with Megajoy.
+  //    Uncomment this line to see what your key matrix is actually putting out. Comment it before working on the Megajoy portion of the code.
+  //    Serial.print((char)e.bit.KEY);
+  //    if(e.bit.EVENT == KEY_JUST_PRESSED) Serial.println(" pressed");
+  //    else if(e.bit.EVENT == KEY_JUST_RELEASED) Serial.println(" released");
+  //  }
+  // delay(10);
 
   // Since I'm documenting this for others, I figure I should add a little in here about Functions in C.
   // This next line defines a variable. It does this in 3 parts. The first part is the variable's type. Normally this would be something like Byte or Char.
@@ -100,7 +100,7 @@ void loop() {
 // This is a function declaration, so the first part is the type of data the function is expected to return (megaJoyControllerData_t)
 // The second part is the function's name (getControllerData)
 // The third part is what variables are we passing in to the function. This is presently Void, meaning the function isn't waiting for data from elsewhere in the program.
-megaJoyControllerData_t getControllerData(void){
+megaJoyControllerData_t getControllerData(void) {
 
   // Start by blanking out the variables so it's not full of junk data.
   megaJoyControllerData_t controllerData = getBlankDataForMegaController();
@@ -109,64 +109,64 @@ megaJoyControllerData_t getControllerData(void){
   customKeypad.tick();
 
   // If the keypad is available, then read the current key from it
-  while(customKeypad.available()){
+  while (customKeypad.available()) {
     keypadEvent e = customKeypad.read();
-    
+
     // This line will cause the matrix keypad to output to the Serial connection. This is great for testing, but interferes with Megajoy.
     // Uncomment this line to see what your key matrix is actually putting out. Comment it before working on the Megajoy portion of the code.
     // Serial.print((char)e.bit.KEY);
 
     // We need a string we can walk through looking for matching keyboard events.
     String keyring = "1234567890abcdefghijklmnopqrstuvwxyz+-";
-    
+
     // Did a key just get pressed? Walk the keyring string looking for a match
-    if(e.bit.EVENT == KEY_JUST_PRESSED) {
+    if (e.bit.EVENT == KEY_JUST_PRESSED) {
       for (unsigned int j = 0; j < keyring.length(); j++) {
         // I might be getting this wrong, but I think this should compare the current spot in the keyring string against the currently pressed key because I'm using an unsigned int.
         if (keyring[j] == (char)e.bit.KEY) {
           // This handles some funky math to skip over the keys reserved for non-matrix use by the normal Megajoy commands.
           // This causes the matrix to fill in Joystick buttons starting from button 1, skipping any outside the matrix, and ending at the end of the matrix's range of possible buttons.
-          if (j <= 20) { 
-            kbpress = j + 1; 
+          if (j <= 20) {
+            kbpress = j + 1;
           } else {
-            kbpress = j + 11; 
+            kbpress = j + 11;
           }
-          controllerData.buttonArray[(kbpress - 2) / 8] |= 1 << ((kbpress - 2) % 8); 
+          controllerData.buttonArray[(kbpress - 2) / 8] |= 1 << ((kbpress - 2) % 8);
         }
       }
-    }         
-    else if(e.bit.EVENT == KEY_JUST_RELEASED) {  
+    }
+    else if (e.bit.EVENT == KEY_JUST_RELEASED) {
       for (unsigned int j = 0; j < keyring.length(); j++) {
         if (keyring[j] == (char)e.bit.KEY) {
           // This handles some funky math to skip over the keys reserved for non-matrix use by the normal Megajoy commands.
           // This causes the matrix to fill in Joystick buttons starting from button 1, skipping any outside the matrix, and ending at the end of the matrix's range of possible buttons.
-          if (j <= 20) { 
-            kbpress = j + 1; 
+          if (j <= 20) {
+            kbpress = j + 1;
           } else {
-            kbpress = j + 11; 
+            kbpress = j + 11;
           }
           controllerData.buttonArray[(kbpress - 2) / 8] &= 0 << ((kbpress - 2) % 8);
         }
-      }   
-    }    
+      }
+    }
 
-  // Small delay to prevent key bouncing.
-  delay(10);
+    // Small delay to prevent key bouncing.
+    delay(10);
 
-  // This is the old version of the string code for use with a different keypad library. Preserved here in case I need to go back to it.
-  //String keyring = "1234567890abcdefghijklmnopqrstuvwxyz+-";
-  //for (int j = 0; j < keyring.length(); j++) {
-  //  if (j <= 20) { 
-  //    kbpress = j + 1; 
-  //  } else {
-  //    kbpress = j + 11; 
-  //  }
-  //
-  //  if (customKeypad.isPressed(keyring[j])) {
-  //      controllerData.buttonArray[(kbpress - 2) / 8] |= 1 << ((kbpress - 2) % 8);
-  //  } else {
-  //      controllerData.buttonArray[(kbpress - 2) / 8] &= 0 << ((kbpress - 2) % 8);
-  //  }
+    // This is the old version of the string code for use with a different keypad library. Preserved here in case I need to go back to it.
+    //String keyring = "1234567890abcdefghijklmnopqrstuvwxyz+-";
+    //for (int j = 0; j < keyring.length(); j++) {
+    //  if (j <= 20) {
+    //    kbpress = j + 1;
+    //  } else {
+    //    kbpress = j + 11;
+    //  }
+    //
+    //  if (customKeypad.isPressed(keyring[j])) {
+    //      controllerData.buttonArray[(kbpress - 2) / 8] |= 1 << ((kbpress - 2) % 8);
+    //  } else {
+    //      controllerData.buttonArray[(kbpress - 2) / 8] &= 0 << ((kbpress - 2) % 8);
+    //  }
   }
 
   // This section should match what you've set in the setupPins function (Make sure to add 1 to the upper range, since this is less than, rather than less than or equal.
@@ -175,9 +175,11 @@ megaJoyControllerData_t getControllerData(void){
     bool isPressed = !digitalRead(i);
     // This next line is in here to reverse the output of keys 25 through 29. I'm using 3-pin illuminated automotive keys. These report back the reverse of a typical key (because closing the circuit sends 5V).
     // You can modify this line to deal with any keys you want to reverse, or comment it out if you don't have any.
-    if (i > 24 && i < 29){isPressed = !isPressed;}
+    if (i > 24 && i < 29) {
+      isPressed = !isPressed;
+    }
 
-    // This line here converts your digital pin (from setupPins) 
+    // This line here converts your digital pin (from setupPins) into a button press
     controllerData.buttonArray[(i - 2) / 8] |= (isPressed) << ((i - 2) % 8);
   }
 
