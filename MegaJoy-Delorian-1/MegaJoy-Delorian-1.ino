@@ -75,18 +75,16 @@ void loop() {
   //if (key != NO_KEY){
   //  Serial.println(key);}
 
-customKeypad.tick();
-
-  while(customKeypad.available()){
-    keypadEvent e = customKeypad.read();
-//    This line will cause the matrix keypad to output to the Serial connection. This is great for testing, but interferes with Megajoy.
-//    Uncomment this line to see what your key matrix is actually putting out. Comment it before working on the Megajoy portion of the code.
-//    Serial.print((char)e.bit.KEY);
-    if(e.bit.EVENT == KEY_JUST_PRESSED) Serial.println(" pressed");
-    else if(e.bit.EVENT == KEY_JUST_RELEASED) Serial.println(" released");
-  }
-
-  delay(10);
+//  customKeypad.tick();
+//  while(customKeypad.available()){
+//    keypadEvent e = customKeypad.read();
+    //    This line will cause the matrix keypad to output to the Serial connection. This is great for testing, but interferes with Megajoy.
+    //    Uncomment this line to see what your key matrix is actually putting out. Comment it before working on the Megajoy portion of the code.
+    //    Serial.print((char)e.bit.KEY);
+//    if(e.bit.EVENT == KEY_JUST_PRESSED) Serial.println(" pressed");
+//    else if(e.bit.EVENT == KEY_JUST_RELEASED) Serial.println(" released");
+//  }
+// delay(10);
 
   // Since I'm documenting this for others, I figure I should add a little in here about Functions in C.
   // This next line defines a variable. It does this in 3 parts. The first part is the variable's type. Normally this would be something like Byte or Char.
@@ -107,19 +105,68 @@ megaJoyControllerData_t getControllerData(void){
   // Start by blanking out the variables so it's not full of junk data.
   megaJoyControllerData_t controllerData = getBlankDataForMegaController();
 
-  String keyring = "1234567890abcdefghijklmnopqrstuvwxyz+-";
-  for (int j = 0; j < keyring.length(); j++) {
-    if (j <= 20) { 
-      kbpress = j + 1; 
-    } else {
-      kbpress = j + 11; 
-    }
-  
-    if (customKeypad.isPressed(keyring[j])) {
-        controllerData.buttonArray[(kbpress - 2) / 8] |= 1 << ((kbpress - 2) % 8);
-    } else {
-        controllerData.buttonArray[(kbpress - 2) / 8] &= 0 << ((kbpress - 2) % 8);
-    }
+  // Scan the keyboard matrix
+  customKeypad.tick();
+
+  // If the keypad is available, then read the current key from it
+  while(customKeypad.available()){
+    keypadEvent e = customKeypad.read();
+    
+    // This line will cause the matrix keypad to output to the Serial connection. This is great for testing, but interferes with Megajoy.
+    // Uncomment this line to see what your key matrix is actually putting out. Comment it before working on the Megajoy portion of the code.
+    // Serial.print((char)e.bit.KEY);
+
+    // We need a string we can walk through looking for matching keyboard events.
+    String keyring = "1234567890abcdefghijklmnopqrstuvwxyz+-";
+    
+    // Did a key just get pressed? Walk the keyring string looking for a match
+    if(e.bit.EVENT == KEY_JUST_PRESSED) {
+      for (unsigned int j = 0; j < keyring.length(); j++) {
+        // I might be getting this wrong, but I think this should compare the current spot in the keyring string against the currently pressed key because I'm using an unsigned int.
+        if (keyring[j] == (char)e.bit.KEY) {
+          // This handles some funky math to skip over the keys reserved for non-matrix use by the normal Megajoy commands.
+          // This causes the matrix to fill in Joystick buttons starting from button 1, skipping any outside the matrix, and ending at the end of the matrix's range of possible buttons.
+          if (j <= 20) { 
+            kbpress = j + 1; 
+          } else {
+            kbpress = j + 11; 
+          }
+          controllerData.buttonArray[(kbpress - 2) / 8] |= 1 << ((kbpress - 2) % 8); 
+        }
+      }
+    }         
+    else if(e.bit.EVENT == KEY_JUST_RELEASED) {  
+      for (unsigned int j = 0; j < keyring.length(); j++) {
+        if (keyring[j] == (char)e.bit.KEY) {
+          // This handles some funky math to skip over the keys reserved for non-matrix use by the normal Megajoy commands.
+          // This causes the matrix to fill in Joystick buttons starting from button 1, skipping any outside the matrix, and ending at the end of the matrix's range of possible buttons.
+          if (j <= 20) { 
+            kbpress = j + 1; 
+          } else {
+            kbpress = j + 11; 
+          }
+          controllerData.buttonArray[(kbpress - 2) / 8] &= 0 << ((kbpress - 2) % 8);
+        }
+      }   
+    }    
+
+  // Small delay to prevent key bouncing.
+  delay(10);
+
+  // This is the old version of the string code for use with a different keypad library. Preserved here in case I need to go back to it.
+  //String keyring = "1234567890abcdefghijklmnopqrstuvwxyz+-";
+  //for (int j = 0; j < keyring.length(); j++) {
+  //  if (j <= 20) { 
+  //    kbpress = j + 1; 
+  //  } else {
+  //    kbpress = j + 11; 
+  //  }
+  //
+  //  if (customKeypad.isPressed(keyring[j])) {
+  //      controllerData.buttonArray[(kbpress - 2) / 8] |= 1 << ((kbpress - 2) % 8);
+  //  } else {
+  //      controllerData.buttonArray[(kbpress - 2) / 8] &= 0 << ((kbpress - 2) % 8);
+  //  }
   }
 
   // This section should match what you've set in the setupPins function (Make sure to add 1 to the upper range, since this is less than, rather than less than or equal.
