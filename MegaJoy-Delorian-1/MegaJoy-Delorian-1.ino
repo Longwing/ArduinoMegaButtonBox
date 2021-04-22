@@ -8,6 +8,9 @@
 // Megajoy.h includes the UnoJoy library with customizations for use with an Arduino Mega. Theoretically we shouldn't need to make any changes to megajoy.h.
 #include "MegaJoy.h"
 
+#define DEBUG true
+#define REAL_CODE true
+  
 int kbpress = 0;
 
 // Now let's define the button matrix using Arduino's keypad.h library.
@@ -52,9 +55,12 @@ Adafruit_Keypad customKeypad = Adafruit_Keypad( makeKeymap(keys), rowPins, colPi
 
 void setup() {
   //  The serial connection is useful for testing the output of your key matrix, but it will interfere with MegaJoy. Uncomment this when testing the key matrix, then comment it out for the actual Megajoy configuration.
-  //  Serial.begin(9600);
-  setupPins();
+#if DEBUG
+  Serial.begin(9600);
+#else
   setupMegaJoy();
+#endif
+  setupPins();
   customKeypad.begin();
 }
 
@@ -75,24 +81,27 @@ void loop() {
   //if (key != NO_KEY){
   //  Serial.println(key);}
 
-  //  customKeypad.tick();
-  //  while(customKeypad.available()){
-  //    keypadEvent e = customKeypad.read();
-  //    This line will cause the matrix keypad to output to the Serial connection. This is great for testing, but interferes with Megajoy.
-  //    Uncomment this line to see what your key matrix is actually putting out. Comment it before working on the Megajoy portion of the code.
-  //    Serial.print((char)e.bit.KEY);
-  //    if(e.bit.EVENT == KEY_JUST_PRESSED) Serial.println(" pressed");
-  //    else if(e.bit.EVENT == KEY_JUST_RELEASED) Serial.println(" released");
-  //  }
-  // delay(10);
+#if DEBUG && !REAL_CODE
+     customKeypad.tick();
+  
+      while(customKeypad.available()){
+        keypadEvent e = customKeypad.read();
+        Serial.print((char)e.bit.KEY);
+        if(e.bit.EVENT == KEY_JUST_PRESSED) Serial.println(" pressed");
+        else if(e.bit.EVENT == KEY_JUST_RELEASED) Serial.println(" released");
+      }
+   delay(10);
+ #endif
 
   // Since I'm documenting this for others, I figure I should add a little in here about Functions in C.
   // This next line defines a variable. It does this in 3 parts. The first part is the variable's type. Normally this would be something like Byte or Char.
   // In this case it's megaJoyControllerData_t. This type is defined in the Megajoy library.
   // The second part is the variable (controllerData).
   // The third part is where controllerData gets it's contents from. getControllerData is a function (defined below).
+#if REAL_CODE
   megaJoyControllerData_t controllerData = getControllerData();
   setControllerData(controllerData);
+#endif
 }
 
 // Here's the primary function for running MegaJoy. Any data that MegaJoy needs to interpret as a button press should be included in here somewhere.
@@ -111,41 +120,45 @@ megaJoyControllerData_t getControllerData(void) {
   // If the keypad is available, then read the current key from it
   while (customKeypad.available()) {
     keypadEvent e = customKeypad.read();
-
-    // This line will cause the matrix keypad to output to the Serial connection. This is great for testing, but interferes with Megajoy.
-    // Uncomment this line to see what your key matrix is actually putting out. Comment it before working on the Megajoy portion of the code.
-    // Serial.print((char)e.bit.KEY);
-
     // We need a string we can walk through looking for matching keyboard events.
     String keyring = "1234567890abcdefghijklmnopqrstuvwxyz+-";
 
+#if DEBUG
+    // This line will cause the matrix keypad to output to the Serial connection. This is great for testing, but interferes with Megajoy.
+    // Uncomment this line to see what your key matrix is actually putting out. Comment it before working on the Megajoy portion of the code.
+     Serial.print((char)e.bit.KEY);
+#endif
     // Did a key just get pressed? Walk the keyring string looking for a match
     if (e.bit.EVENT == KEY_JUST_PRESSED) {
+#if DEBUG
+      Serial.println(" PRESSED");
+#endif
       for (unsigned int j = 0; j < keyring.length(); j++) {
         // I might be getting this wrong, but I think this should compare the current spot in the keyring string against the currently pressed key because I'm using an unsigned int.
         if (keyring[j] == (char)e.bit.KEY) {
           // This handles some funky math to skip over the keys reserved for non-matrix use by the normal Megajoy commands.
           // This causes the matrix to fill in Joystick buttons starting from button 1, skipping any outside the matrix, and ending at the end of the matrix's range of possible buttons.
-          if (j <= 20) {
-            kbpress = j + 1;
-          } else {
-            kbpress = j + 11;
-          }
+          kbpress = get_kbpress(j);
+          int index = (kbpress - 2) % 8;
+          print_data("BEFORE: ", controllerData.buttonArray);
           controllerData.buttonArray[(kbpress - 2) / 8] |= 1 << ((kbpress - 2) % 8);
+          print_data("AFTER:  ", controllerData.buttonArray);
         }
       }
     }
     else if (e.bit.EVENT == KEY_JUST_RELEASED) {
+#if DEBUG
+      Serial.println(" RELEASED");
+#endif
       for (unsigned int j = 0; j < keyring.length(); j++) {
         if (keyring[j] == (char)e.bit.KEY) {
           // This handles some funky math to skip over the keys reserved for non-matrix use by the normal Megajoy commands.
           // This causes the matrix to fill in Joystick buttons starting from button 1, skipping any outside the matrix, and ending at the end of the matrix's range of possible buttons.
-          if (j <= 20) {
-            kbpress = j + 1;
-          } else {
-            kbpress = j + 11;
-          }
-          controllerData.buttonArray[(kbpress - 2) / 8] &= 0 << ((kbpress - 2) % 8);
+          kbpress = get_kbpress(j);
+          int index = (kbpress - 2) % 8;
+          print_data("BEFORE: ", controllerData.buttonArray);
+          controllerData.buttonArray[(kbpress - 2) / 8] &= ~(1 << ((kbpress - 2) % 8));
+          print_data("AFTER:  ", controllerData.buttonArray);
         }
       }
     }
@@ -180,13 +193,15 @@ megaJoyControllerData_t getControllerData(void) {
     }
 
     // This line here converts your digital pin (from setupPins) into a button press
+    print_data("BEFORE: ", controllerData.buttonArray);
     controllerData.buttonArray[(i - 2) / 8] |= (isPressed) << ((i - 2) % 8);
+    print_data("AFTER:  ", controllerData.buttonArray); 
   }
 
   // Set the analog inputs
   // Since analogRead(pin) returns a 10 bit value, we need to perform a bit shift operation to lose the 2 least significant bits and get an 8 bit number that we can use
   // I've commented out most axes because my button box only has one analog dial. This isn't strictly necessary, but I figure it's best not to leave a bunch of random Analog Read actions in the middle of my setup if I'm not really using any.
-  // Which analog pin you use will determine which axis gets reported back to windows for your joystick. The first two are your standard joystick X and Y values.
+  // Which analog pin you use will determine which axis  gets reported back to windows for your joystick. The first two are your standard joystick X and Y values.
   //  controllerData.analogAxisArray[0] = analogRead(A0);
   //  controllerData.analogAxisArray[1] = analogRead(A1);
   controllerData.analogAxisArray[2] = analogRead(A2);
@@ -202,4 +217,32 @@ megaJoyControllerData_t getControllerData(void) {
 
   // Because this is running in a loop, this end of the function will return the current status of all buttons and axes back to the loop.
   return controllerData;
+}
+
+int get_kbpress(int char_index) {
+  int kbpress;
+    if (char_index <= 20) {
+    kbpress = char_index + 1;
+  } else {
+    kbpress = char_index + 11;
+  }
+
+#if DEBUG
+  Serial.print("index ");
+  Serial.print(char_index);
+  Serial.print(" converted to kbpress ");
+  Serial.println(kbpress + 2);
+#endif
+  return kbpress + 2;
+}
+
+void print_data(char* label, byte* data) {
+#if DEBUG
+  Serial.print(label);
+    for (int i; i < BUTTON_ARRAY_SIZE; i++) {
+    Serial.print(data[i], BIN);
+    Serial.print(" ");
+  }
+  Serial.print("\n");
+#endif
 }
