@@ -1,3 +1,5 @@
+#include <FastLED.h>
+
 // Megajoy.h includes the UnoJoy library with customizations for use with an Arduino Mega. Theoretically we shouldn't need to make any changes to megajoy.h.
 #include "MegaJoy.h"
 
@@ -33,8 +35,8 @@ void loop() {
   // This loop runs constantly. Effectivly this polls all your buttons for new information about their status. We shoudln't need to make any changes here.
 
 #if DEBUG && !REAL_CODE
-   delay(10);
- #endif
+  delay(10);
+#endif
 
   // Since I'm documenting this for others, I figure I should add a little in here about Functions in C.
   // This next line defines a variable. It does this in 3 parts. The first part is the variable's type. Normally this would be something like Byte or Char.
@@ -63,32 +65,24 @@ megaJoyControllerData_t getControllerData(void) {
     bool isPressed = !digitalRead(i);
     // This next line is in here to reverse the output of keys 25 through 29. I'm using 3-pin illuminated automotive keys. These report back the reverse of a typical key (because closing the circuit sends 5V).
     // You can modify this line to deal with any keys you want to reverse, or comment it out if you don't have any.
-    if (i > 30 && i < 42) {
-     isPressed = !isPressed;
+    if (i > 29 && i < 42) {
+      isPressed = !isPressed;
     }
     // This line here converts your digital pin (from setupPins) into a button press
     controllerData.buttonArray[(i - 11) / 8] |= (isPressed) << ((i - 11) % 8);
-  }  
-
-  bool isPressed = !digitalRead(A12);
-  if (isPressed = 1) {
-    controllerData.buttonArray[(55 - 11) / 8] |= (isPressed) << ((55 - 11) % 8);
   }
 
+  controllerData.dpad0UpOn = !digitalRead(A12);
+  controllerData.dpad0LeftOn = !digitalRead(A13);
+  controllerData.dpad0RightOn = !digitalRead(A14);
+  controllerData.dpad0DownOn = !digitalRead(A15);
 
 
-//isPressed = !digitalRead(A13);
-//controllerData.buttonArray[(56 - 2) / 8] |= (isPressed) << ((56 - 2) % 8);
-//isPressed = !digitalRead(A14);
-//controllerData.buttonArray[(57 - 2) / 8] |= (isPressed) << ((57 - 2) % 8);
-//isPressed = !digitalRead(A15);
-//controllerData.buttonArray[(58 - 2) / 8] |= (isPressed) << ((58 - 2) % 8);
-
-
-//controllerData.circleOn = !digitalRead(A12);
-//controllerData.circleOn = !digitalRead(A13);
-//controllerData.circleOn = !digitalRead(A14);
-//controllerData.circleOn = !digitalRead(A15);
+  //controllerData.buttonArray[(56 - 2) / 8] |= (isPressed) << ((56 - 2) % 8);
+  //isPressed = !digitalRead(A14);
+  //controllerData.buttonArray[(57 - 2) / 8] |= (isPressed) << ((57 - 2) % 8);
+  //isPressed = !digitalRead(A15);
+  //controllerData.buttonArray[(58 - 2) / 8] |= (isPressed) << ((58 - 2) % 8);
 
   // Set the analog inputs
   // Since analogRead(pin) returns a 10 bit value, we need to perform a bit shift operation to lose the 2 least significant bits and get an 8 bit number that we can use
