@@ -7,6 +7,8 @@
 #define DEBUG false
 #define REAL_CODE true
 #define LED_CODE true
+#define FIRE_CODE false
+#define LIGHTNING_CODE true
 
 #if LED_CODE
 // Fire2012 by Mark Kriegsman, July 2012
@@ -48,16 +50,28 @@
 #define SPARKING 200
 
 #define LED_PIN     2
-#define COLOR_ORDER GRB
 #define CHIPSET     WS2811
 #define NUM_LEDS    12
-
-#define BRIGHTNESS  400
+#define BRIGHTNESS  255
 #define FRAMES_PER_SECOND 60
 
 bool gReverseDirection = false;
 
 CRGB leds[NUM_LEDS];
+#endif
+
+#if FIRE_CODE
+#define COLOR_ORDER GRB
+#endif
+
+#if LIGHTNING_CODE
+#define FPS 50
+#define COLOR_ORDER RGB
+#define MAX_BRIGHTNESS 255                   // watch the power!
+#define FLASHES 8
+#define FREQUENCY 0 // delay between strikes
+
+unsigned int dimmer = 1;
 #endif
 
 // Where are you starting your buttons from? The default configuration assumes Pin 2
@@ -118,7 +132,7 @@ void loop() {
   megaJoyControllerData_t controllerData = getControllerData();
   setControllerData(controllerData);
 #endif
-#if LED_CODE
+#if FIRE_CODE
   if (!digitalRead(12) == HIGH) {
     Fire2012(); // run simulation frame
     FastLED.show(); // display this frame
@@ -128,6 +142,20 @@ void loop() {
     Fire2012(); // run simulation frame
     FastLED.show(); // display this frame
     FastLED.delay(1000 / FRAMES_PER_SECOND);
+  }
+  else {
+    FastLED.clear();
+    // fadeToBlackBy(leds, NUM_LEDS, 256);
+    FastLED.show(); // display this frame
+    FastLED.delay(1000 / FRAMES_PER_SECOND);
+  }
+#endif
+#if LIGHTNING_CODE
+  if (!digitalRead(12) == HIGH) {
+    lightning();
+  }
+  else if (!digitalRead(13) == HIGH) {
+    lightning();
   }
   else {
     FastLED.clear();
@@ -217,7 +245,7 @@ megaJoyControllerData_t getControllerData(void) {
   return controllerData;
 }
 
-#if LED_CODE
+#if FIRE_CODE
 void Fire2012()
 {
   // Array of temperature readings at each simulation cell
@@ -250,5 +278,24 @@ void Fire2012()
     }
     leds[pixelnumber] = color;
   }
+}
+#endif
+
+#if LIGHTNING_CODE
+void lightning() {
+  for (int flashCounter = 0; flashCounter < random8(3,FLASHES); flashCounter++)
+  {
+    if(flashCounter == 0) dimmer = 2;     // the brightness of the leader is scaled down by a factor of 2
+    else dimmer = random8(1,3);           // return strokes are brighter than the leader
+    
+    FastLED.showColor(CHSV(255, 0, 255/dimmer));
+    delay(random8(16,40));                 // each flash only lasts 4-10 milliseconds
+    FastLED.showColor(CHSV(255, 0, 0));
+    
+    if (flashCounter == 0) delay (150);   // longer delay until next flash after the leader
+    delay(50+random8(100));               // shorter delay between strikes  
+  }
+  delay(random8(FREQUENCY)*100);          // delay between strikes
+ 
 }
 #endif
