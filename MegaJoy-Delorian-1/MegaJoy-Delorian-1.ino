@@ -60,6 +60,10 @@ bool gReverseDirection = false;
 CRGB leds[NUM_LEDS];
 #endif
 
+#if REAL_CODE
+#define BUTTONSHIFT 11
+#endif
+
 void setup() {
   setupMegaJoy();
   setupPins();
@@ -138,7 +142,7 @@ megaJoyControllerData_t getControllerData(void) {
 
   // This section should match what you've set in the setupPins function (Make sure to add 1 to the upper range, since this is less than, rather than less than or equal.
   // This is basically the range of digital pins you're using for buttons.
-  for (int i = 11; i < 55; i++) {
+  for (int i = BUTTONSHIFT; i < 55; i++) {
     bool isPressed = !digitalRead(i);
     // This next line is in here to reverse the output of pins 30 through 41. I'm using 3-pin illuminated automotive keys. These report back the reverse of a typical key (because closing the circuit sends 5V).
     // You can modify this line to deal with any keys you want to reverse, or comment it out if you don't have any.
@@ -150,26 +154,32 @@ megaJoyControllerData_t getControllerData(void) {
     // Since buttons start at pin 2, you subtract 2.
     // My version starts at pin 11, so I subtract 11. This makes the first pin I'm using (pin 11) into button 1 and increments from there.
     // I changed this so I could save the PWM pins 2 through 10 for use with an LED matrix.
+    // What's happening here is it's taking your digital pin and flipping a single 0 to 1 in a 64 bit array.
+    // It uses the positions of 0s and 1s in that array to designate 2 sets of 32 buttons (for 2 HID joysticks with 32 buttons each)
     controllerData.buttonArray[(i - 11) / 8] |= (isPressed) << ((i - 11) % 8);
   }
 
+  // This part was tricky and took a lot of work to figure out. I wanted to borrow some of the analog pins to use as buttons.
+  // However, how do I designate a button in the buttonArray when I'm not using the for loop above? This was the answer.
+  // 54 - 11 puts the button press right at the end of the actual digital pins from the loop above.
+  // using -11 isn't really necesarry here. I could just do the math, but this keeps it consistent with the loop above, in case I move the pins later it's clear that I need to shift all of these.
   if (!digitalRead(A12) == HIGH) {
     controllerData.buttonArray[(54 - 11) / 8] |= (!digitalRead(A12)) << ((54 - 11) % 8);
   }
-    if (!digitalRead(A13) == HIGH) {
-    controllerData.buttonArray[(55 - 11) / 8] |= (!digitalRead(A12)) << ((55 - 11) % 8);
+  if (!digitalRead(A13) == HIGH) {
+    controllerData.buttonArray[(55 - 11) / 8] |= (!digitalRead(A13)) << ((55 - 11) % 8);
   }
-    if (!digitalRead(A14) == HIGH) {
-    controllerData.buttonArray[(56 - 11) / 8] |= (!digitalRead(A12)) << ((56 - 11) % 8);
+  if (!digitalRead(A14) == HIGH) {
+    controllerData.buttonArray[(56 - 11) / 8] |= (!digitalRead(A14)) << ((56 - 11) % 8);
   }
-    if (!digitalRead(A15) == HIGH) {
-    controllerData.buttonArray[(57 - 11) / 8] |= (!digitalRead(A12)) << ((57 - 11) % 8);
+  if (!digitalRead(A15) == HIGH) {
+    controllerData.buttonArray[(57 - 11) / 8] |= (!digitalRead(A15)) << ((57 - 11) % 8);
   }
 
- // controllerData.dpad0UpOn = !digitalRead(A12);
- //controllerData.dpad0LeftOn = !digitalRead(A13);
- //controllerData.dpad0RightOn = !digitalRead(A14);
- // controllerData.dpad0DownOn = !digitalRead(A15);
+  // controllerData.dpad0UpOn = !digitalRead(A12);
+  //controllerData.dpad0LeftOn = !digitalRead(A13);
+  //controllerData.dpad0RightOn = !digitalRead(A14);
+  // controllerData.dpad0DownOn = !digitalRead(A15);
 
 
   //controllerData.buttonArray[(56 - 2) / 8] |= (isPressed) << ((56 - 2) % 8);
