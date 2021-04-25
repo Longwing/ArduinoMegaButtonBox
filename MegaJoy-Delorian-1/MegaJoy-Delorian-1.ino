@@ -1,3 +1,4 @@
+// The FastLED library manages the neopixels I have stashed under the main FTL lever.
 #include <FastLED.h>
 
 // Megajoy.h includes the UnoJoy library with customizations for use with an Arduino Mega. Theoretically we shouldn't need to make any changes to megajoy.h.
@@ -5,10 +6,68 @@
 
 #define DEBUG false
 #define REAL_CODE true
+#define LED_CODE true
+
+#if LED_CODE
+// Fire2012 by Mark Kriegsman, July 2012
+// as part of "Five Elements" shown here: http://youtu.be/knWiGsmgycY
+////
+// This basic one-dimensional 'fire' simulation works roughly as follows:
+// There's a underlying array of 'heat' cells, that model the temperature
+// at each point along the line.  Every cycle through the simulation,
+// four steps are performed:
+//  1) All cells cool down a little bit, losing heat to the air
+//  2) The heat from each cell drifts 'up' and diffuses a little
+//  3) Sometimes randomly new 'sparks' of heat are added at the bottom
+//  4) The heat from each cell is rendered as a color into the leds array
+//     The heat-to-color mapping uses a black-body radiation approximation.
+//
+// Temperature is in arbitrary units from 0 (cold black) to 255 (white hot).
+//
+// This simulation scales it self a bit depending on NUM_LEDS; it should look
+// "OK" on anywhere from 20 to 100 LEDs without too much tweaking.
+//
+// I recommend running this simulation at anywhere from 30-100 frames per second,
+// meaning an interframe delay of about 10-35 milliseconds.
+//
+// Looks best on a high-density LED setup (60+ pixels/meter).
+//
+//
+// There are two main parameters you can play with to control the look and
+// feel of your fire: COOLING (used in step 1 above), and SPARKING (used
+// in step 3 above).
+//
+// COOLING: How much does the air cool as it rises?
+// Less cooling = taller flames.  More cooling = shorter flames.
+// Default 50, suggested range 20-100
+#define COOLING  75
+
+// SPARKING: What chance (out of 255) is there that a new spark will be lit?
+// Higher chance = more roaring fire.  Lower chance = more flickery fire.
+// Default 120, suggested range 50-200.
+#define SPARKING 200
+
+#define LED_PIN     2
+#define COLOR_ORDER GRB
+#define CHIPSET     WS2811
+#define NUM_LEDS    12
+
+#define BRIGHTNESS  400
+#define FRAMES_PER_SECOND 60
+
+bool gReverseDirection = false;
+
+CRGB leds[NUM_LEDS];
+#endif
 
 void setup() {
   setupMegaJoy();
   setupPins();
+#if LED_CODE
+  // delay(3000); // sanity delay
+  FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
+  FastLED.setBrightness( BRIGHTNESS );
+#endif
 }
 
 void setupPins(void) {
@@ -47,6 +106,24 @@ void loop() {
   megaJoyControllerData_t controllerData = getControllerData();
   setControllerData(controllerData);
 #endif
+#if LED_CODE
+  if (!digitalRead(12) == HIGH) {
+    Fire2012(); // run simulation frame
+    FastLED.show(); // display this frame
+    FastLED.delay(1000 / FRAMES_PER_SECOND);
+  }
+  else if (!digitalRead(13) == HIGH) {
+    Fire2012(); // run simulation frame
+    FastLED.show(); // display this frame
+    FastLED.delay(1000 / FRAMES_PER_SECOND);
+  }
+  else {
+    FastLED.clear();
+    // fadeToBlackBy(leds, NUM_LEDS, 256);
+    FastLED.show(); // display this frame
+    FastLED.delay(1000 / FRAMES_PER_SECOND);
+  }
+#endif
 }
 
 // Here's the primary function for running MegaJoy. Any data that MegaJoy needs to interpret as a button press should be included in here somewhere.
@@ -60,22 +137,39 @@ megaJoyControllerData_t getControllerData(void) {
   megaJoyControllerData_t controllerData = getBlankDataForMegaController();
 
   // This section should match what you've set in the setupPins function (Make sure to add 1 to the upper range, since this is less than, rather than less than or equal.
-  // This handles your "normal" buttons and switches that aren't part of a matrix. These pins, when shorted to ground, will report back a button press of the equivalant button (ex. pin 27 gets you button 27).
-  for (int i = 11; i < 54; i++) {
+  // This is basically the range of digital pins you're using for buttons.
+  for (int i = 11; i < 55; i++) {
     bool isPressed = !digitalRead(i);
-    // This next line is in here to reverse the output of keys 25 through 29. I'm using 3-pin illuminated automotive keys. These report back the reverse of a typical key (because closing the circuit sends 5V).
+    // This next line is in here to reverse the output of pins 30 through 41. I'm using 3-pin illuminated automotive keys. These report back the reverse of a typical key (because closing the circuit sends 5V).
     // You can modify this line to deal with any keys you want to reverse, or comment it out if you don't have any.
     if (i > 29 && i < 42) {
       isPressed = !isPressed;
     }
     // This line here converts your digital pin (from setupPins) into a button press
+    // Note the -11 here, this shifts the output down by 11. The default is -2 to handle the serial pins on pin 0 and pin 1.
+    // Since buttons start at pin 2, you subtract 2.
+    // My version starts at pin 11, so I subtract 11. This makes the first pin I'm using (pin 11) into button 1 and increments from there.
+    // I changed this so I could save the PWM pins 2 through 10 for use with an LED matrix.
     controllerData.buttonArray[(i - 11) / 8] |= (isPressed) << ((i - 11) % 8);
   }
 
-  controllerData.dpad0UpOn = !digitalRead(A12);
-  controllerData.dpad0LeftOn = !digitalRead(A13);
-  controllerData.dpad0RightOn = !digitalRead(A14);
-  controllerData.dpad0DownOn = !digitalRead(A15);
+  if (!digitalRead(A12) == HIGH) {
+    controllerData.buttonArray[(54 - 11) / 8] |= (!digitalRead(A12)) << ((54 - 11) % 8);
+  }
+    if (!digitalRead(A13) == HIGH) {
+    controllerData.buttonArray[(55 - 11) / 8] |= (!digitalRead(A12)) << ((55 - 11) % 8);
+  }
+    if (!digitalRead(A14) == HIGH) {
+    controllerData.buttonArray[(56 - 11) / 8] |= (!digitalRead(A12)) << ((56 - 11) % 8);
+  }
+    if (!digitalRead(A15) == HIGH) {
+    controllerData.buttonArray[(57 - 11) / 8] |= (!digitalRead(A12)) << ((57 - 11) % 8);
+  }
+
+ // controllerData.dpad0UpOn = !digitalRead(A12);
+ //controllerData.dpad0LeftOn = !digitalRead(A13);
+ //controllerData.dpad0RightOn = !digitalRead(A14);
+ // controllerData.dpad0DownOn = !digitalRead(A15);
 
 
   //controllerData.buttonArray[(56 - 2) / 8] |= (isPressed) << ((56 - 2) % 8);
@@ -104,3 +198,39 @@ megaJoyControllerData_t getControllerData(void) {
   // Because this is running in a loop, this end of the function will return the current status of all buttons and axes back to the loop.
   return controllerData;
 }
+
+#if LED_CODE
+void Fire2012()
+{
+  // Array of temperature readings at each simulation cell
+  static uint8_t heat[NUM_LEDS];
+
+  // Step 1.  Cool down every cell a little
+  for ( int i = 0; i < NUM_LEDS; i++) {
+    heat[i] = qsub8( heat[i],  random8(0, ((COOLING * 10) / NUM_LEDS) + 2));
+  }
+
+  // Step 2.  Heat from each cell drifts 'up' and diffuses a little
+  for ( int k = NUM_LEDS - 1; k >= 2; k--) {
+    heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2] ) / 3;
+  }
+
+  // Step 3.  Randomly ignite new 'sparks' of heat near the bottom
+  if ( random8() < SPARKING ) {
+    int y = random8(7);
+    heat[y] = qadd8( heat[y], random8(160, 255) );
+  }
+
+  // Step 4.  Map from heat cells to LED colors
+  for ( int j = 0; j < NUM_LEDS; j++) {
+    CRGB color = HeatColor( heat[j]);
+    int pixelnumber;
+    if ( gReverseDirection ) {
+      pixelnumber = (NUM_LEDS - 1) - j;
+    } else {
+      pixelnumber = j;
+    }
+    leds[pixelnumber] = color;
+  }
+}
+#endif
